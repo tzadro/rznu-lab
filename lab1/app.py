@@ -90,7 +90,7 @@ def create_playlist():
         'id': playlists[-1]['id'] + 1,
         'title': request.json['title'],
         'owner': request.json['owner'],
-        'songs': [song['id'] for song in request.json['songs']]
+        'songs': request.json['songs']
     }
     playlists.append(playlist)
     return jsonify({'playlist': make_public_playlist(playlist)}), 201
@@ -104,10 +104,10 @@ def update_playlist(playlist_id):
     if not request.json:
         print(request.json)
         abort(400)
-    playlist[0]['title'] = request.json.get('title', playlist[0]['title'])
-    playlist[0]['owner'] = request.json.get('owner', playlist[0]['owner'])
-    playlist[0]['songs'] = [song['id'] for song in request.json.get('songs', playlist[0]['songs'])]
-    return jsonify({'playlist': make_public_playlist(playlist[0])})
+    playlists[playlist_id - 1]['title'] = request.json.get('title', playlist[0]['title'])
+    playlists[playlist_id - 1]['owner'] = request.json.get('owner', playlist[0]['owner'])
+    playlists[playlist_id - 1]['songs'] = request.json.get('songs', playlist[0]['songs'])
+    return jsonify({'playlist': make_public_playlist(playlists[playlist_id - 1])})
 
 @app.route('/api/playlists/<int:playlist_id>', methods=['DELETE'])
 @auth.login_required
@@ -135,6 +135,7 @@ def get_song(song_id):
 @app.route('/api/songs', methods=['POST'])
 @auth.login_required
 def create_song():
+    print(request.json)
     if not request.json or not 'title' or not 'artist' in request.json:
         abort(400)
     song = {
@@ -153,9 +154,9 @@ def update_song(song_id):
         abort(404)
     if not request.json:
         abort(400)
-    song[0]['title'] = request.json.get('title', song[0]['title'])
-    song[0]['artist'] = request.json.get('artist', song[0]['artist'])
-    return jsonify({'song': song[0]})
+    songs[song_id - 1]['title'] = request.json.get('title', song[0]['title'])
+    songs[song_id - 1]['artist'] = request.json.get('artist', song[0]['artist'])
+    return jsonify({'song': songs[song_id - 1]})
 
 @app.route('/api/songs/<int:song_id>', methods=['DELETE'])
 @auth.login_required
@@ -179,13 +180,13 @@ def delete_song(song_id):
 @auth.login_required
 def get_playlist_songs(playlist_id):
     playlist = make_public_playlist(playlists[playlist_id - 1])
-    return jsonify({'songs': playlist.songs})
+    return jsonify({'songs': playlist['songs']})
 
 @app.route('/api/playlists/<int:playlist_id>/songs/<int:song_id>', methods=['GET'])
 @auth.login_required
 def get_playlist_song(playlist_id, song_id):
     playlist = make_public_playlist(playlists[playlist_id - 1])
-    song = [song for song in playlist.songs if song['id'] == song_id]
+    song = [song for song in playlist['songs'] if song['id'] == song_id]
     if len(song) == 0:
         abort(404)
     return jsonify({'song': song[0]})
@@ -214,9 +215,9 @@ def update_playlist_song(playlist_id, song_id):
         abort(404)
     if not request.json:
         abort(400)
-    song[0]['title'] = request.json.get('title', song[0]['title'])
-    song[0]['artist'] = request.json.get('artist', song[0]['artist'])
-    return jsonify({'song': song[0]})
+    songs[song_id - 1]['title'] = request.json.get('title', song[0]['title'])
+    songs[song_id - 1]['artist'] = request.json.get('artist', song[0]['artist'])
+    return jsonify({'song': songs[song_id - 1]})
 
 @app.route('/api/playlists/<int:playlist_id>/song/<int:song_id>', methods=['DELETE'])
 @auth.login_required
