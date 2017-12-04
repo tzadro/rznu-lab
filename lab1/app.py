@@ -46,7 +46,7 @@ def make_public_playlist(playlist):
     new_playlist = {}
     for field in playlist:
         if field == 'songs':
-            new_playlist['songs'] = [songs[song_id - 1] for song_id in playlist[field]]
+            new_playlist['songs'] = [[song for song in songs if song['id'] == song_id][0] for song_id in playlist[field] if len([song for song in songs if song['id'] == song_id]) != 0]
         else:
             new_playlist[field] = playlist[field]
     return new_playlist
@@ -167,9 +167,9 @@ def delete_song(song_id):
         abort(404)
 
     for playlist in playlists:
-        for playlist_song_id in songs:
+        for playlist_song_id in playlist:
             if playlist_song_id == song_id:
-                playlist.songs.remove(playlist_song_id)
+                playlist.remove(playlist_song_id)
                 break
 
     songs.remove(song[0])
@@ -179,13 +179,21 @@ def delete_song(song_id):
 @app.route('/api/playlists/<int:playlist_id>/songs', methods=['GET'])
 @auth.login_required
 def get_playlist_songs(playlist_id):
-    playlist = make_public_playlist(playlists[playlist_id - 1])
+    playlist = [playlist for playlist in playlists if playlist['id'] == playlist_id]
+    if len(playlist) == 0:
+        abort(404)
+    playlist = make_public_playlist(playlist[0])
+
     return jsonify({'songs': playlist['songs']})
 
 @app.route('/api/playlists/<int:playlist_id>/songs/<int:song_id>', methods=['GET'])
 @auth.login_required
 def get_playlist_song(playlist_id, song_id):
-    playlist = make_public_playlist(playlists[playlist_id - 1])
+    playlist = [playlist for playlist in playlists if playlist['id'] == playlist_id]
+    if len(playlist) == 0:
+        abort(404)
+    playlist = make_public_playlist(playlist[0])
+
     song = [song for song in playlist['songs'] if song['id'] == song_id]
     if len(song) == 0:
         abort(404)
@@ -194,7 +202,11 @@ def get_playlist_song(playlist_id, song_id):
 @app.route('/api/playlists/<int:playlist_id>/song', methods=['POST'])
 @auth.login_required
 def create_playlist_song(playlist_id):
-    playlist = make_public_playlist(playlists[playlist_id - 1])
+    playlist = [playlist for playlist in playlists if playlist['id'] == playlist_id]
+    if len(playlist) == 0:
+        abort(404)
+    playlist = make_public_playlist(playlist[0])
+
     if not request.json or not 'title' or not 'artist' in request.json:
         abort(400)
     song = {
@@ -209,7 +221,11 @@ def create_playlist_song(playlist_id):
 @app.route('/api/playlists/<int:playlist_id>/song/<int:song_id>', methods=['PUT'])
 @auth.login_required
 def update_playlist_song(playlist_id, song_id):
-    playlist = make_public_playlist(playlists[playlist_id - 1])
+    playlist = [playlist for playlist in playlists if playlist['id'] == playlist_id]
+    if len(playlist) == 0:
+        abort(404)
+    playlist = make_public_playlist(playlist[0])
+
     song = [song for song in playlist.songs if song['id'] == song_id]
     if len(song) == 0:
         abort(404)
@@ -222,16 +238,20 @@ def update_playlist_song(playlist_id, song_id):
 @app.route('/api/playlists/<int:playlist_id>/song/<int:song_id>', methods=['DELETE'])
 @auth.login_required
 def delete_playlist_song(playlist_id, song_id):
-    playlist = make_public_playlist(playlists[playlist_id - 1])
+    playlist = [playlist for playlist in playlists if playlist['id'] == playlist_id]
+    if len(playlist) == 0:
+        abort(404)
+    playlist = make_public_playlist(playlist[0])
+
     song = [song for song in playlist.songs if song['id'] == song_id]
     
     if len(song) == 0:
         abort(404)
 
     for playlist in playlists:
-        for playlist_song_id in songs:
+        for playlist_song_id in playlist:
             if playlist_song_id == song_id:
-                playlist.songs.remove(playlist_song_id)
+                playlist.remove(playlist_song_id)
                 break
 
     songs.remove(song[0])
